@@ -20,6 +20,7 @@ public class SnowflakeDBFunctionSymbolFactory extends AbstractSQLDBFunctionSymbo
 
     private static final String UUID_STRING_STR = "UUID_STRING";
     private static final String RANDOM_STR = "RANDOM";
+    private static final String GET_PATH_STR = "GET_PATH";
 
     @Inject
     protected SnowflakeDBFunctionSymbolFactory(TypeFactory typeFactory) {
@@ -34,6 +35,18 @@ public class SnowflakeDBFunctionSymbolFactory extends AbstractSQLDBFunctionSymbo
         Table<String, Integer, DBFunctionSymbol> table = HashBasedTable.create(
                 createDefaultRegularFunctionTable(typeFactory));
 
+        /*
+         * GET_PATH extracts a sub-document out of a semi-structured value: it returns a VARIANT,
+         * which is NULL when the path is not present.
+         */
+        DBFunctionSymbol getPath = new DefaultSQLSimpleTypedDBFunctionSymbol(GET_PATH_STR, 2,
+                dbTypeFactory.getDBJsonType(), false, abstractRootDBType) {
+            @Override
+            protected boolean mayReturnNullWithoutNullArguments() {
+                return true;
+            }
+        };
+        table.put(GET_PATH_STR, 2, getPath);
 
         return ImmutableTable.copyOf(table);
     }
