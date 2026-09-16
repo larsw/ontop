@@ -1,0 +1,20 @@
+{
+  "relations": [
+    {
+      "name": ["LENSES", "FLATTENED_WORKERS"],
+      "baseRelation": ["ONTOP_TEST", "NESTED", "COMPANY_DATA_VARIANT"],
+      "flattenedColumn": {
+        "name": "WORKERS",
+        "datatype": "variant"
+      },
+      "columns": {
+        "kept": [
+          "ID"
+        ],
+        "new": "WORKER",
+        "position": "POS"
+      },
+      "type": "FlattenLens"
+    }
+  ]
+}

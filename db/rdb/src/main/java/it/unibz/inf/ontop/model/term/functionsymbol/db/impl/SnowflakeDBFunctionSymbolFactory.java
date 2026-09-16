@@ -288,6 +288,25 @@ public class SnowflakeDBFunctionSymbolFactory extends AbstractSQLDBFunctionSymbo
         return this.serializeCheckAndConvertDateFromDateTime(terms, termConverter, termFactory);
     }
 
+    /**
+     * VARIANT is the only nested datatype on which such a test can be made
+     * (ARRAY is already known to be an array).
+     */
+    @Override
+    protected DBBooleanFunctionSymbol createIsArray(DBTermType dbTermType) {
+        if (dbTermType.getCategory() != DBTermType.Category.JSON)
+            return super.createIsArray(dbTermType);
+
+        return new DBBooleanFunctionSymbolWithSerializerImpl(
+                "VARIANT_IS_ARRAY",
+                ImmutableList.of(dbTermType),
+                dbBooleanType,
+                false,
+                (terms, termConverter, termFactory) -> String.format(
+                        "IS_ARRAY(%s)",
+                        termConverter.apply(terms.get(0))));
+    }
+
     @Override
     protected DBFunctionSymbol createDBSample(DBTermType termType) {
         return new DBSampleFunctionSymbolImpl(termType, "ANY_VALUE");
