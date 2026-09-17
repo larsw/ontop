@@ -7,12 +7,16 @@ import org.junit.jupiter.api.BeforeAll;
 import java.io.IOException;
 import java.sql.SQLException;
 
+/**
+ * Same as {@link NestedDataVariantSnowflakeTest}, but the flattened VARIANT columns are extracted
+ * out of a larger document by GET_PATH.
+ */
 @SnowflakeLightweightTest
-public class NestedDataSnowflakeTest extends AbstractNestedDataSnowflakeTest {
+public class NestedDataGetPathSnowflakeTest extends AbstractNestedDataSnowflakeTest {
 
     private static final String PROPERTIES_FILE = "/nested/snowflake/nested-snowflake.properties";
     private static final String OBDA_FILE = "/nested/nested.obda";
-    private static final String LENS_FILE = "/nested/snowflake/nested-lenses.json";
+    private static final String LENS_FILE = "/nested/snowflake/nested-lenses-getpath.json";
 
     @BeforeAll
     public static void before() throws IOException, SQLException {

@@ -7,12 +7,16 @@ import org.junit.jupiter.api.BeforeAll;
 import java.io.IOException;
 import java.sql.SQLException;
 
+/**
+ * Same as {@link NestedDataSnowflakeTest}, but the flatten lenses declare the flattened columns
+ * as VARIANT (JSON category) instead of ARRAY.
+ */
 @SnowflakeLightweightTest
-public class NestedDataSnowflakeTest extends AbstractNestedDataSnowflakeTest {
+public class NestedDataVariantSnowflakeTest extends AbstractNestedDataSnowflakeTest {
 
     private static final String PROPERTIES_FILE = "/nested/snowflake/nested-snowflake.properties";
     private static final String OBDA_FILE = "/nested/nested.obda";
-    private static final String LENS_FILE = "/nested/snowflake/nested-lenses.json";
+    private static final String LENS_FILE = "/nested/snowflake/nested-lenses-variant.json";
 
     @BeforeAll
     public static void before() throws IOException, SQLException {

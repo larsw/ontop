@@ -74,6 +74,18 @@ public class LensParsingTest {
     }
 
 
+    public static ImmutableSet<Lens> loadViewDefinitionsSnowflake(String viewFilePath, String dbMetadataFilePath)
+            throws Exception {
+        return loadViewDefinitions(
+                viewFilePath,
+                dbMetadataFilePath,
+                OntopSQLCoreConfiguration.defaultBuilder()
+                        .jdbcUrl("jdbc:snowflake://nowhere.snowflakecomputing.com")
+                        .jdbcDriver("net.snowflake.client.jdbc.SnowflakeDriver")
+                        .build()
+        );
+    }
+
     public static ImmutableSet<Lens> loadViewDefinitionsPostgres(String viewFilePath, String dbMetadataFilePath)
             throws Exception {
         return loadViewDefinitions(
