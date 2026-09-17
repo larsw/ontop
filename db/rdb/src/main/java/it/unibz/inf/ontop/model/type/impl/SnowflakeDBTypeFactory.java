@@ -35,6 +35,8 @@ public class SnowflakeDBTypeFactory extends DefaultSQLDBTypeFactory {
 
     protected static final String ARRAY_STR = "ARRAY";
 
+    public static final String VARIANT_STR = "VARIANT";
+
     @AssistedInject
     private SnowflakeDBTypeFactory(@Assisted TermType rootTermType, @Assisted TypeFactory typeFactory) {
         super(createSnowflakeTypeMap(rootTermType, typeFactory), createSnowflakeCodeMap(), createGenericAbstractTypeMap(rootTermType, typeFactory));
@@ -80,6 +82,12 @@ public class SnowflakeDBTypeFactory extends DefaultSQLDBTypeFactory {
         map.put(TIMESTAMPLTZ_STR, timestampLTZType);
         map.put(TIMESTAMPTZ_STR, timestampTZType);
         map.put(TIMESTAMPNTZ_STR, timestampNTZType);
+
+        /*
+         * VARIANT is the semi-structured type of Snowflake. It can hold JSON documents (including arrays),
+         * hence it is treated as a JSON type.
+         */
+        map.put(VARIANT_STR, new JsonDBTermTypeImpl(VARIANT_STR, rootAncestry));
         return map;
     }
 
@@ -90,6 +98,12 @@ public class SnowflakeDBTypeFactory extends DefaultSQLDBTypeFactory {
         map.put(DefaultTypeCode.DECIMAL, NUMBER_38_10_STR);
         map.put(DefaultTypeCode.LARGE_INTEGER, NUMBER_19_STR);
         map.put(DefaultTypeCode.DATETIMESTAMP, TIMESTAMP_TZ_STR);
+        map.put(DefaultTypeCode.JSON, VARIANT_STR);
         return ImmutableMap.copyOf(map);
+    }
+
+    @Override
+    public boolean supportsJson() {
+        return true;
     }
 }
