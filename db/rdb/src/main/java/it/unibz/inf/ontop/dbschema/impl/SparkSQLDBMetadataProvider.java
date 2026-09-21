@@ -17,6 +17,7 @@ import javax.annotation.Nullable;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Objects;
@@ -150,6 +151,30 @@ public class SparkSQLDBMetadataProvider extends AbstractDBMetadataProvider {
         if (relation instanceof FileBasedNamedRelationDefinition)
             return;
 
-        super.insertIntegrityConstraints(relation, metadataLookup);
+        try {
+            super.insertIntegrityConstraints(relation, metadataLookup);
+        }
+        catch (MetadataExtractionException e) {
+            // Spark SQL has no primary keys, unique constraints or foreign keys, and the drivers
+            // disagree on how to say so: the Hive one answers with empty result sets, while
+            // Spark's own Connect driver throws SQLFeatureNotSupportedException from
+            // getPrimaryKeys, getIndexInfo and getImportedKeys alike. Nothing is lost by carrying
+            // on -- there were no constraints to find.
+            if (!isUnsupportedFeature(e))
+                throw e;
+
+            LOGGER.debug("The JDBC driver does not report integrity constraints; none extracted for {}",
+                    relation.getID());
+        }
+    }
+
+    private static boolean isUnsupportedFeature(Throwable t) {
+        for (Throwable cause = t; cause != null; cause = cause.getCause()) {
+            if (cause instanceof SQLFeatureNotSupportedException)
+                return true;
+            if (cause.getCause() == cause)
+                break;
+        }
+        return false;
     }
 }

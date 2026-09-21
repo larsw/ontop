@@ -106,6 +106,12 @@ than ignoring what it does not recognise -- `extract-db-metadata` failed outrigh
 requested table types contains unsupported items: SYSTEM"*. `SparkSQLDBMetadataProvider` now asks
 for the two types that exist.
 
+Extracting integrity constraints broke on it too. Spark SQL has no primary keys, unique
+constraints or foreign keys, and the drivers disagree on how to say so: the Hive one answers with
+empty result sets, Spark's own throws `SQLFeatureNotSupportedException` from `getPrimaryKeys`,
+`getIndexInfo` and `getImportedKeys` alike. `SparkSQLDBMetadataProvider` now treats that refusal as
+"there are none", which is what it means, and still propagates every other failure.
+
 ## Known gap
 
 The predefined-query engine (`OntopRDF4JPredefinedQueryEngineImpl`) still takes its connection
