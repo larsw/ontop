@@ -39,7 +39,10 @@ public class ReformulateController {
 
         ImmutableMultimap<String, String> inputHeaders = SparqlQueryExecutor.extractHttpHeaders(request);
 
-        try (OntopRepositoryConnection connection = repository.getConnection()) {
+        // Same headers at connection time as at query time: reformulation depends on the caller
+        // (authorization functions in mappings and lenses see the user, roles and groups), and a
+        // repository configured with per-request connections cannot open one without them.
+        try (OntopRepositoryConnection connection = repository.getConnection(inputHeaders)) {
             ReformulationAndId reformulationAndId = forNativeConsumption
                     ? connection.reformulateIntoNativeQueryWithId(query, inputHeaders, true)
                     : connection.reformulateWithId(query, inputHeaders);

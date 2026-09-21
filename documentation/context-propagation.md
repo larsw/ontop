@@ -91,6 +91,13 @@ header means nothing and a fresh id is minted, as before.
 A value that is not a UUID is left alone rather than failing the query; it is still readable through
 `QueryContext.getHttpHeaders()`.
 
+## Known gap
+
+The predefined-query engine (`OntopRDF4JPredefinedQueryEngineImpl`) still takes its connection
+without a context, because the context is not threaded as far as `executeConstructQuery`. Against a
+context-aware pool its queries therefore run on whatever `jdbc.url` names, not on the caller's
+credentials. Deployments using both should keep that in mind until it is threaded through too.
+
 ## What did not change
 
 - No new required configuration. Every addition is opt-in and every interface change is a default
