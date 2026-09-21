@@ -48,7 +48,9 @@ public class SparqlQueryExecutor {
 
         ImmutableMultimap<String, String> httpHeaders = extractHttpHeaders(request);
 
-        try (OntopRepositoryConnection connection = repository.getConnection()) {
+        // The headers go in at connection time, not just at query time: a repository configured
+        // with per-request connections needs the caller's credentials before it can open one.
+        try (OntopRepositoryConnection connection = repository.getConnection(httpHeaders)) {
             Query q = connection.prepareQuery(QueryLanguage.SPARQL, query, httpHeaders);
             OutputStream bao = response.getOutputStream();
 

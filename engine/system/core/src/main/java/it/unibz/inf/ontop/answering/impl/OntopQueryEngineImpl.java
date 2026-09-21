@@ -5,6 +5,7 @@ import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.AssistedInject;
 import it.unibz.inf.ontop.answering.OntopQueryEngine;
 import it.unibz.inf.ontop.answering.reformulation.QueryReformulator;
+import it.unibz.inf.ontop.evaluator.QueryContext;
 import it.unibz.inf.ontop.exception.OntopConnectionException;
 import it.unibz.inf.ontop.injection.OntopSystemFactory;
 import it.unibz.inf.ontop.injection.ReformulationFactory;
@@ -42,6 +43,11 @@ public class OntopQueryEngineImpl implements OntopQueryEngine {
     @Override
     public OntopConnection getConnection() throws OntopConnectionException {
         return dbConnector.getConnection();
+    }
+
+    @Override
+    public OntopConnection getConnection(QueryContext queryContext) throws OntopConnectionException {
+        return dbConnector.getConnection(queryContext);
     }
 
     @Override

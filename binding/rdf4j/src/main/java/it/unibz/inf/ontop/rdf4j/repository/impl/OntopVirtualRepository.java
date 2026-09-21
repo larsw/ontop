@@ -1,7 +1,10 @@
 package it.unibz.inf.ontop.rdf4j.repository.impl;
 
+import com.google.common.collect.ImmutableMultimap;
 import com.google.inject.Injector;
 import it.unibz.inf.ontop.answering.OntopQueryEngine;
+import it.unibz.inf.ontop.answering.connection.impl.QuestStatement;
+import it.unibz.inf.ontop.evaluator.QueryContext;
 import it.unibz.inf.ontop.answering.cache.HTTPCacheHeaders;
 import it.unibz.inf.ontop.answering.connection.OntopConnection;
 import it.unibz.inf.ontop.query.RDF4JQueryFactory;
@@ -32,12 +35,14 @@ public class OntopVirtualRepository extends AbstractRepository implements OntopR
     private OntopQueryEngine queryEngine;
     private final RDF4JQueryFactory inputQueryFactory;
     private final HTTPCacheHeaders cacheHeaders;
+    private final QueryContext.Factory queryContextFactory;
 
     public OntopVirtualRepository(OntopSystemConfiguration configuration) {
         this.configuration = configuration;
         Injector injector = configuration.getInjector();
         inputQueryFactory = injector.getInstance(RDF4JQueryFactory.class);
         cacheHeaders = injector.getInstance(HTTPCacheHeaders.class);
+        queryContextFactory = injector.getInstance(QueryContext.Factory.class);
         settings = configuration.getSettings();
     }
 
@@ -55,6 +60,31 @@ public class OntopVirtualRepository extends AbstractRepository implements OntopR
 
         try {
             return new OntopRepositoryConnectionImpl(this, getOntopConnection(), inputQueryFactory, settings);
+        } catch (Exception e) {
+            logger.error("Error creating repo connection: " + e.getMessage());
+            throw new RepositoryException(e);
+        }
+    }
+
+    /**
+     * Opens the connection for one request, under the context built from its headers.
+     *
+     * The same context then evaluates the query, so the connection, the query log and everything
+     * derived from the caller's identity agree -- see QuestStatement's connectionQueryContext.
+     */
+    @Override
+    public OntopRepositoryConnection getConnection(ImmutableMultimap<String, String> httpHeaders)
+            throws RepositoryException {
+        if (!isInitialized()) {
+            init();
+        }
+
+        QueryContext queryContext = queryContextFactory.create(
+                QuestStatement.normalizeHttpHeaders(httpHeaders));
+
+        try {
+            return new OntopRepositoryConnectionImpl(this, queryEngine.getConnection(queryContext),
+                    inputQueryFactory, settings);
         } catch (Exception e) {
             logger.error("Error creating repo connection: " + e.getMessage());
             throw new RepositoryException(e);

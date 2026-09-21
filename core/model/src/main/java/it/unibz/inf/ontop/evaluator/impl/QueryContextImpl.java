@@ -36,6 +36,34 @@ public class QueryContextImpl implements QueryContext {
         this(normalizedHttpHeaders, settings, UUID.randomUUID());
     }
 
+    /**
+     * The query id of a request that carries a correlation id in the header named by
+     * {@code ontop.queryIdHttpHeader}, so Ontop's logs and the connection it opens against the
+     * data source join up with the caller's own trace.
+     *
+     * Falls back to a fresh id when the header is absent, empty, or not a UUID -- an id that
+     * cannot be parsed is not worth failing a query over, and a caller with a non-UUID trace id
+     * can still read it out of {@link #getHttpHeaders()}.
+     */
+    private static UUID resolveQueryId(ImmutableMap<String, String> normalizedHttpHeaders,
+                                       OntopModelSettings settings) {
+        return settings.getQueryIdHttpHeader()
+                .map(normalizedHttpHeaders::get)
+                .map(String::trim)
+                .filter(v -> !v.isEmpty())
+                .flatMap(QueryContextImpl::parseUuid)
+                .orElseGet(UUID::randomUUID);
+    }
+
+    private static Optional<UUID> parseUuid(String value) {
+        try {
+            return Optional.of(UUID.fromString(value));
+        }
+        catch (IllegalArgumentException e) {
+            return Optional.empty();
+        }
+    }
+
     @AssistedInject
     protected QueryContextImpl(@Assisted ImmutableMap<String, String> normalizedHttpHeaders,
                                @Assisted UUID queryId, OntopModelSettings settings) {
@@ -44,7 +72,7 @@ public class QueryContextImpl implements QueryContext {
 
     protected QueryContextImpl(ImmutableMap<String, String> normalizedHttpHeaders,
                                OntopModelSettings settings, UUID salt) {
-        this(normalizedHttpHeaders, UUID.randomUUID(),settings, salt);
+        this(normalizedHttpHeaders, resolveQueryId(normalizedHttpHeaders, settings), settings, salt);
     }
 
     protected QueryContextImpl(ImmutableMap<String, String> normalizedHttpHeaders,

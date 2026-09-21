@@ -5,6 +5,7 @@ import com.google.inject.assistedinject.AssistedInject;
 import it.unibz.inf.ontop.answering.connection.DBConnector;
 import it.unibz.inf.ontop.answering.connection.JDBCStatementInitializer;
 import it.unibz.inf.ontop.answering.connection.OntopConnection;
+import it.unibz.inf.ontop.evaluator.QueryContext;
 import it.unibz.inf.ontop.exception.OntopConnectionException;
 import it.unibz.inf.ontop.injection.OntopSystemSQLSettings;
 import it.unibz.inf.ontop.answering.reformulation.QueryReformulator;
@@ -17,6 +18,7 @@ import org.apache.commons.rdf.api.RDF;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.sql.*;
 
 /**
@@ -90,8 +92,15 @@ public class JDBCConnector implements DBConnector {
     }
 
     public synchronized Connection getSQLPoolConnection() throws OntopConnectionException {
+        return getSQLPoolConnection(null);
+    }
+
+    public synchronized Connection getSQLPoolConnection(@Nullable QueryContext queryContext)
+            throws OntopConnectionException {
         try {
-            return connectionPool.getConnection();
+            return queryContext == null
+                    ? connectionPool.getConnection()
+                    : connectionPool.getConnection(queryContext);
         } catch (SQLException e) {
             throw new OntopConnectionException(e);
         }
@@ -113,9 +122,14 @@ public class JDBCConnector implements DBConnector {
      */
     @Override
     public OntopConnection getConnection() throws OntopConnectionException {
+        return getConnection(null);
+    }
 
-        return new SQLConnection(this, queryReformulator, getSQLPoolConnection(),
-                termFactory, rdfFactory, substitutionFactory, statementInitializer, settings);
+    @Override
+    public OntopConnection getConnection(@Nullable QueryContext queryContext) throws OntopConnectionException {
+
+        return new SQLConnection(this, queryReformulator, getSQLPoolConnection(queryContext),
+                termFactory, rdfFactory, substitutionFactory, statementInitializer, settings, queryContext);
     }
 
 

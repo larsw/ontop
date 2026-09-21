@@ -12,6 +12,7 @@ import it.unibz.inf.ontop.query.resultset.impl.*;
 import it.unibz.inf.ontop.query.resultset.BooleanResultSet;
 import it.unibz.inf.ontop.query.resultset.TupleResultSet;
 import it.unibz.inf.ontop.exception.*;
+import it.unibz.inf.ontop.evaluator.QueryContext;
 import it.unibz.inf.ontop.injection.OntopSystemSQLSettings;
 
 import it.unibz.inf.ontop.answering.reformulation.QueryReformulator;
@@ -26,6 +27,7 @@ import it.unibz.inf.ontop.model.type.DBTermType;
 import it.unibz.inf.ontop.substitution.SubstitutionFactory;
 import org.apache.commons.rdf.api.RDF;
 
+import javax.annotation.Nullable;
 import java.sql.*;
 
 import static it.unibz.inf.ontop.iq.impl.UnaryIQTreeTools.UnaryIQTreeDecomposition;
@@ -47,7 +49,16 @@ public class SQLQuestStatement extends QuestStatement {
                              JDBCStatementFinalizer statementFinalizer, TermFactory termFactory,
                              RDF rdfFactory, SubstitutionFactory substitutionFactory,
                              OntopSystemSQLSettings settings) {
-        super(queryProcessor);
+        this(queryProcessor, sqlStatement, statementFinalizer, termFactory, rdfFactory,
+                substitutionFactory, settings, null);
+    }
+
+    public SQLQuestStatement(QueryReformulator queryProcessor, Statement sqlStatement,
+                             JDBCStatementFinalizer statementFinalizer, TermFactory termFactory,
+                             RDF rdfFactory, SubstitutionFactory substitutionFactory,
+                             OntopSystemSQLSettings settings,
+                             @Nullable QueryContext connectionQueryContext) {
+        super(queryProcessor, connectionQueryContext);
         this.sqlStatement = sqlStatement;
         this.statementFinalizer = statementFinalizer;
         this.termFactory = termFactory;

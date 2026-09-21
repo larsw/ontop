@@ -6,12 +6,15 @@ import it.unibz.inf.ontop.answering.connection.JDBCStatementInitializer;
 import it.unibz.inf.ontop.answering.connection.OntopConnection;
 import it.unibz.inf.ontop.answering.connection.OntopStatement;
 import it.unibz.inf.ontop.query.KGQueryFactory;
+import it.unibz.inf.ontop.evaluator.QueryContext;
 import it.unibz.inf.ontop.exception.OntopConnectionException;
 import it.unibz.inf.ontop.answering.reformulation.QueryReformulator;
 import it.unibz.inf.ontop.injection.OntopSystemSQLSettings;
 import it.unibz.inf.ontop.model.term.TermFactory;
 import it.unibz.inf.ontop.substitution.SubstitutionFactory;
 import org.apache.commons.rdf.api.RDF;
+
+import javax.annotation.Nullable;
 
 /***
  * Quest connection is responsible for wrapping a JDBC connection to the data
@@ -38,11 +41,29 @@ public class SQLConnection implements OntopConnection {
 	private final RDF rdfFactory;
 	private final JDBCStatementInitializer statementInitializer;
 
+	/**
+	 * The context this connection was opened for, when the pool is context-aware. Kept so that a
+	 * reconnection uses the same caller's credentials, and so the statement is evaluated under the
+	 * context the connection belongs to.
+	 */
+	@Nullable
+	private final QueryContext queryContext;
+
 
 	public SQLConnection(JDBCConnector jdbcConnector, QueryReformulator queryProcessor, Connection connection,
 						 TermFactory termFactory, RDF rdfFactory, SubstitutionFactory substitutionFactory,
 						 JDBCStatementInitializer statementInitializer,
 						 OntopSystemSQLSettings settings) {
+		this(jdbcConnector, queryProcessor, connection, termFactory, rdfFactory, substitutionFactory,
+				statementInitializer, settings, null);
+	}
+
+	public SQLConnection(JDBCConnector jdbcConnector, QueryReformulator queryProcessor, Connection connection,
+						 TermFactory termFactory, RDF rdfFactory, SubstitutionFactory substitutionFactory,
+						 JDBCStatementInitializer statementInitializer,
+						 OntopSystemSQLSettings settings,
+						 @Nullable QueryContext queryContext) {
+		this.queryContext = queryContext;
 		this.jdbcConnector = jdbcConnector;
 		this.queryProcessor = queryProcessor;
 		this.conn = connection;
@@ -68,13 +89,13 @@ public class SQLConnection implements OntopConnection {
 		try {
 			if (conn.isClosed()) {
 				// Sometimes it gets dropped, reconnect
-				conn = jdbcConnector.getSQLPoolConnection();
+				conn = jdbcConnector.getSQLPoolConnection(queryContext);
 			}
 			return new SQLQuestStatement(
 					this.queryProcessor,
 					statementInitializer.createAndInitStatement(conn),
 					statementInitializer,
-					termFactory, rdfFactory, substitutionFactory, settings);
+					termFactory, rdfFactory, substitutionFactory, settings, queryContext);
 		} catch (Exception e) {
 			throw new OntopConnectionException(e);
 		}

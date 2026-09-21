@@ -18,6 +18,7 @@ import it.unibz.inf.ontop.utils.ImmutableCollectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 
@@ -32,6 +33,17 @@ public abstract class QuestStatement implements OntopStatement {
 	private final QueryLogger.Factory queryLoggerFactory;
 	private final QueryContext.Factory queryContextFactory;
 
+	/**
+	 * The context the connection behind this statement was opened for, when there is one.
+	 *
+	 * A context-aware connection pool opens its connection for a specific caller, so the query
+	 * that runs on it has to be evaluated under the very same context -- otherwise the query id
+	 * in the logs, the salt and the user information would belong to a second, freshly minted
+	 * context while the connection belongs to the first.
+	 */
+	@Nullable
+	private final QueryContext connectionQueryContext;
+
 	private QueryExecutionThread<?,?> executionThread;
 	private boolean canceled = false;
 
@@ -40,9 +52,14 @@ public abstract class QuestStatement implements OntopStatement {
 
 
 	public QuestStatement(QueryReformulator queryProcessor) {
+		this(queryProcessor, null);
+	}
+
+	public QuestStatement(QueryReformulator queryProcessor, @Nullable QueryContext connectionQueryContext) {
 		this.engine = queryProcessor;
 		this.queryLoggerFactory = queryProcessor.getQueryLoggerFactory();
 		this.queryContextFactory = queryProcessor.getQueryContextFactory();
+		this.connectionQueryContext = connectionQueryContext;
 	}
 
 	/**
@@ -211,7 +228,9 @@ public abstract class QuestStatement implements OntopStatement {
 			throws OntopConnectionException, OntopReformulationException, OntopQueryEvaluationException, OntopResultConversionException {
 
 		ImmutableMap<String, String> normalizedHttpHeaders = normalizeHttpHeaders(httpHeaders);
-		QueryContext queryContext = queryContextFactory.create(normalizedHttpHeaders);
+		QueryContext queryContext = connectionQueryContext != null
+				? connectionQueryContext
+				: queryContextFactory.create(normalizedHttpHeaders);
 
 		return execute(inputQuery, normalizedHttpHeaders, queryContext);
 	}
