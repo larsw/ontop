@@ -112,6 +112,13 @@ empty result sets, Spark's own throws `SQLFeatureNotSupportedException` from `ge
 `getIndexInfo` and `getImportedKeys` alike. `SparkSQLDBMetadataProvider` now treats that refusal as
 "there are none", which is what it means, and still propagates every other failure.
 
+Finally, `DefaultJDBCStatementInitializer` asked for things a minimal driver may not offer.
+`createStatement(TYPE_FORWARD_ONLY, CONCUR_READ_ONLY)` asks for the JDBC defaults, and
+`setFetchSize` is a buffering hint; neither changes a single row that comes back. Spark's driver
+implements only the no-argument `createStatement` and throws on `setFetchSize`, which surfaced as
+`OntopConnectionException: java.sql.SQLFeatureNotSupportedException` on every query. Both are now
+attempted and fall back.
+
 ## Known gap
 
 The predefined-query engine (`OntopRDF4JPredefinedQueryEngineImpl`) still takes its connection
