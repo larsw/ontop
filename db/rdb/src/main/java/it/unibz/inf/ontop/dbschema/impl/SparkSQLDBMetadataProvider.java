@@ -90,7 +90,10 @@ public class SparkSQLDBMetadataProvider extends AbstractDBMetadataProvider {
                 LOGGER.warn("Unable to load system tables due to SQLException: " + e.getMessage());
             }
         }
-        return metadata.getTables(null, null, null, new String[] { "TABLE", "VIEW", "SYSTEM" });
+        // TABLE and VIEW only. Spark has no SYSTEM relations, and its own Connect JDBC driver
+        // validates the argument rather than ignoring what it does not recognise:
+        // "The requested table types contains unsupported items: SYSTEM."
+        return metadata.getTables(null, null, null, new String[] { "TABLE", "VIEW" });
     }
 
     @Override

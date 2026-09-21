@@ -100,6 +100,12 @@ there -- only the transport differs -- so `sql-default.properties` now maps
 `org.apache.spark.sql.connect.client.jdbc.SparkConnectDriver` to the same
 `SparkSQL*` factories, serializer, normalizer and metadata provider.
 
+Listing relations through it also asked for table type `SYSTEM` alongside `TABLE` and `VIEW`.
+Spark has no such relations, and unlike the Hive driver its own one validates the argument rather
+than ignoring what it does not recognise -- `extract-db-metadata` failed outright with *"The
+requested table types contains unsupported items: SYSTEM"*. `SparkSQLDBMetadataProvider` now asks
+for the two types that exist.
+
 ## Known gap
 
 The predefined-query engine (`OntopRDF4JPredefinedQueryEngineImpl`) still takes its connection
