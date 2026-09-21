@@ -91,6 +91,15 @@ header means nothing and a fresh id is minted, as before.
 A value that is not a UUID is left alone rather than failing the query; it is still readable through
 `QueryContext.getHttpHeaders()`.
 
+## Also: the Spark Connect JDBC driver is now a recognised Spark SQL dialect
+
+Ontop picks a dialect by JDBC driver class name. `jdbc:sc://`, the driver Spark 4.1 ships for its
+own Connect protocol, was not in that table, so it fell through to the generic SQL dialect and
+Ontop generated SQL Spark does not speak. It is the same dialect as the Hive driver already mapped
+there -- only the transport differs -- so `sql-default.properties` now maps
+`org.apache.spark.sql.connect.client.jdbc.SparkConnectDriver` to the same
+`SparkSQL*` factories, serializer, normalizer and metadata provider.
+
 ## Known gap
 
 The predefined-query engine (`OntopRDF4JPredefinedQueryEngineImpl`) still takes its connection
